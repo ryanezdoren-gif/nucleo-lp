@@ -1,4 +1,4 @@
-import { readSheet } from '@/lib/sheets';
+import { readSheet } from '../../lib/sheets';
 export const dynamic = 'force-dynamic';
 export default async function Clientes(){
   const rows = await readSheet('Clientes').catch(()=>[] as any[]);

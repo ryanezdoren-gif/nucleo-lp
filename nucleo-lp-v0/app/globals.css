@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+*{box-sizing:border-box}
+html,body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+.card{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:16px}
+.table{width:100%;border-collapse:separate;border-spacing:0 8px}
+.th,.td{padding:10px 12px}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid rgba(255,255,255,.2)}
+.badge.green{background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.35)}
+.badge.amber{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.35)}
+.badge.red{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.35)}

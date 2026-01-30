@@ -5,18 +5,24 @@ const SCOPES = [
   "https://www.googleapis.com/auth/drive.readonly",
 ];
 
+type GoogleCreds = {
+  client_email: string;
+  private_key: string;
+};
+
 function getAuth() {
   const json = process.env.GOOGLE_CREDENTIALS_JSON;
   if (!json) throw new Error("Falta GOOGLE_CREDENTIALS_JSON");
 
-  const creds = JSON.parse(json) as {
-    client_email: string;
-    private_key: string;
-  };
+  const creds = JSON.parse(json) as GoogleCreds;
+
+  // Important when storing the key in env vars (it often comes with literal \n)
+  const key = creds.private_key?.replace(/\\n/g, "\n");
+  if (!creds.client_email || !key) throw new Error("Credenciales inválidas en GOOGLE_CREDENTIALS_JSON");
 
   return new google.auth.JWT({
     email: creds.client_email,
-    key: creds.private_key,
+    key,
     scopes: SCOPES,
   });
 }
@@ -46,10 +52,7 @@ export async function readSheet(tab: string) {
   );
 }
 
-export async function writeHeaderAwareRow(
-  tab: string,
-  row: Record<string, any>
-) {
+export async function writeHeaderAwareRow(tab: string, row: Record<string, any>) {
   const auth = getAuth();
   const sheets = google.sheets({ version: "v4", auth });
   const spreadsheetId = requireSpreadsheetId();
@@ -59,10 +62,7 @@ export async function writeHeaderAwareRow(
     range: `${tab}!1:1`,
   });
 
-  const headers = (headerRes.data.values?.[0] ?? []).map((h) =>
-    String(h).trim()
-  );
-
+  const headers = (headerRes.data.values?.[0] ?? []).map((h) => String(h).trim());
   if (headers.length === 0) {
     throw new Error("Debe existir una fila de encabezados en la hoja");
   }
@@ -77,11 +77,7 @@ export async function writeHeaderAwareRow(
   });
 }
 
-export async function upsertRowByKey(
-  tab: string,
-  keyHeader: string,
-  csvValues: string[]
-) {
+export async function upsertRowByKey(tab: string, keyHeader: string, csvValues: string[]) {
   const auth = getAuth();
   const sheets = google.sheets({ version: "v4", auth });
   const spreadsheetId = requireSpreadsheetId();
@@ -96,16 +92,15 @@ export async function upsertRowByKey(
 
   const headers = (rows[0] ?? []).map((h) => String(h).trim());
   const idx = headers.indexOf(keyHeader);
-  if (idx === -1) {
-    throw new Error(`Encabezado clave no encontrado: ${keyHeader}`);
-  }
+  if (idx === -1) throw new Error(`Encabezado clave no encontrado: ${keyHeader}`);
 
   const keyVal = csvValues[idx] ?? "";
 
+  // Sheets are 1-indexed; row 1 is header. Data starts at row 2.
   let foundRowNumber = -1;
   for (let i = 1; i < rows.length; i++) {
     if (String(rows[i]?.[idx] ?? "") === String(keyVal)) {
-      foundRowNumber = i + 1; // Sheets are 1-indexed
+      foundRowNumber = i + 1;
       break;
     }
   }
@@ -129,21 +124,27 @@ export async function upsertRowByKey(
     });
   }
 }
+
 export async function ensureHeaders(tab: string, headers: string[]) {
-const auth = getAuth();
-const sheets = google.sheets({ version: "v4", auth });
-const spreadsheetId = requireSpreadsheetId();
-const headerRes = await sheets.spreadsheets.values.get({
-spreadsheetId,
-range: ${tab}!1:1,
-});
-const existing = (headerRes.data.values?.[0] ?? []).map((h) => String(h).trim());
-if (existing.length === 0 || existing.join("|") !== headers.join("|")) {
-await sheets.spreadsheets.values.update({
-spreadsheetId,
-range: ${tab}!A1:Z1,
-valueInputOption: "USER_ENTERED",
-requestBody: { values: [headers] },
-});
+  const auth = getAuth();
+  const sheets = google.sheets({ version: "v4", auth });
+  const spreadsheetId = requireSpreadsheetId();
+
+  const headerRes = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range: `${tab}!1:1`,
+  });
+
+  const existing = (headerRes.data.values?.[0] ?? []).map((h) => String(h).trim());
+
+  // Only update if missing or different
+  if (existing.length === 0 || existing.join("|") !== headers.join("|")) {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${tab}!A1:Z1`,
+      valueInputOption: "USER_ENTERED",
+      requestBody: { values: [headers] },
+    });
+  }
 }
-}
+

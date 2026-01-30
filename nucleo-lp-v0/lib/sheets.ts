@@ -129,3 +129,21 @@ export async function upsertRowByKey(
     });
   }
 }
+export async function ensureHeaders(tab: string, headers: string[]) {
+const auth = getAuth();
+const sheets = google.sheets({ version: "v4", auth });
+const spreadsheetId = requireSpreadsheetId();
+const headerRes = await sheets.spreadsheets.values.get({
+spreadsheetId,
+range: ${tab}!1:1,
+});
+const existing = (headerRes.data.values?.[0] ?? []).map((h) => String(h).trim());
+if (existing.length === 0 || existing.join("|") !== headers.join("|")) {
+await sheets.spreadsheets.values.update({
+spreadsheetId,
+range: ${tab}!A1:Z1,
+valueInputOption: "USER_ENTERED",
+requestBody: { values: [headers] },
+});
+}
+}

@@ -26,7 +26,7 @@ export default async function Page() {
   const vencidas = facturas.filter(f=> /vencid/i.test(f.estado)).length;
 
   return (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="kpi-grid">
       <div className="card"><div className="text-sm text-slate-400">MRR Mantenciones</div><div className="text-3xl font-bold">{toCLP(mrr)}</div></div>
       <div className="card"><div className="text-sm text-slate-400">Ingresos One‑off (mes)</div><div className="text-3xl font-bold">{toCLP(ingresosMes)}</div></div>
       <div className="card"><div className="text-sm text-slate-400">Pendiente por cobrar</div><div className="text-3xl font-bold">{toCLP(pendiente)}</div></div>

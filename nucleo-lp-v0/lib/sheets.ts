@@ -59,9 +59,13 @@ if(String(rows[i][idx] ?? '') === String(keyVal)) { foundIndex = i+1; break; }
 }
 const values = headers.map((_,i)=> csvValues[i] ?? '');
 if(foundIndex === -1){
-await sheets.spreadsheets.values.append({ spreadsheetId, range: ${tab}!A:Z, valueInputOption: 'USER_ENTERED', requestBody: { values: [values] } });
+await sheets.spreadsheets.values.append({
+spreadsheetId, range: ${tab}!A:Z, valueInputOption: 'USER_ENTERED', requestBody: { values: [values] }
+});
 }else{
 const range = ${tab}!A${foundIndex}:Z${foundIndex};
-await sheets.spreadsheets.values.update({ spreadsheetId, range, valueInputOption: 'USER_ENTERED', requestBody: { values: [values] } });
+await sheets.spreadsheets.values.update({
+spreadsheetId, range, valueInputOption: 'USER_ENTERED', requestBody: { values: [values] }
+});
 }
 }
